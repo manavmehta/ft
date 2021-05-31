@@ -1,4 +1,4 @@
-# TCP File Transfer Application
+# TCP File Sharing Application
 
 The application has two primary parts - Client and Server - and the reliable transfer is ensured using TCP with help of socket() API specifying SOCK_STREAM.
 
