@@ -387,7 +387,7 @@ int _get(int sockfd, int datafd, char *input){
         sprintf(str, "RETR %s", filename);
     }   
     printf("File: %s\n", filename);
-    sprintf(temp1, "from-server-%s", filename);
+    sprintf(temp1, "out-%s", filename);
     memset(filename, '\0', (int)sizeof(filename));
 
 
@@ -454,134 +454,9 @@ int _get(int sockfd, int datafd, char *input){
     return 1;
 }
 
-// int main(int argc, char **argv){
-
-// 	int server_port;
-//     int sockfd, listenfd, datafd;
-//     int cmd_code, n5, n6, x;
-//     u16 port;
-// 	struct sockaddr_in server_addr, data_addr;
-// 	char command[1024], ip[50], str[MAXLINE+1];
-
-// 	if(argc != 3){
-// 		printf(RED "Invalid number of arguments. Please follow the format.\n");
-// 		printf("Format: ./client <server-ip> <server-port>\n" RESET);
-// 		exit(-1);
-// 	}
-
-// 	//get server port
-// 	sscanf(argv[2], "%d", &server_port); // store argv[2] into server_port
-
-//     //set up control connection using sockfd as control socket descriptor
-//     if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-//     	perror("socket connection error occured\n");
-//     	exit(-1);
-//     }
-                
-//     memset(&server_addr, '\0', sizeof(server_addr));
-//     server_addr.sin_family = AF_INET; // address family -> trivially, we use AF_INET.
-//     server_addr.sin_port = htons(server_port); // 16 bit port no, conv from network to host byte order
-
-//     // convert host addr into AF_INET addr family as store in server_addr.sin_addr
-//     if (inet_pton(AF_INET, argv[1], &server_addr.sin_addr) != 1){
-//         // conversion successful only if inet_pton returns 1
-//     	perror("inet_pton error. Could not parse host address.");
-//     	exit(-1);
-//     }
-
-//     // connect socket ref by sockfd to server_addr (address and port sprecified)
-//     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0){
-//     	perror("connection error occured.\n");
-//     	exit(-1);
-//     }
-
-
-//     // set up data connection
-//     listenfd = socket(AF_INET, SOCK_STREAM, 0); // TCP(SOCK_STREAM) will only break connection when one party exits or network error occurs
-
-//     memset(&data_addr, '\0', sizeof(data_addr));
-//     data_addr.sin_family = AF_INET;
-//     data_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//     data_addr.sin_port = htons(0);
-
-//     // bind socket to the data_addr port
-//     bind(listenfd, (struct sockaddr*) &data_addr, sizeof(data_addr));
-
-//     // listen for connections on socket
-//     listen(listenfd, BACKLOGS); // max pending connections
-    
-//     // get ip address from control port
-//     get_ip_port(sockfd, ip, (int *)&x);
-
-//     // x = 0;
-//     // printf(YEL "x: %d\n", x);
-//     printf(YEL "ip: %s\n" RESET, ip);
-//     //get data connection port from listenfd
-//     get_ip_port(listenfd, str, (int *)&port);
-    
-//     printf(YEL "Port: %d\n" RESET,  port);
-//     printf(YEL "str: %s\n" RESET, str);
-//     convert(port, &n5, &n6);
-
-//     while(1){
-
-//         memset(command, '\0', strlen(command));
-
-//         // get prompt
-//         cmd_code = get_cmd_code(command);
-        
-//         // case: quit
-//         if(cmd_code == 4){
-//             char quit[100];
-//             sprintf(quit, "QUIT");
-//             write(sockfd, quit, strlen(quit));
-//             memset(quit, '\0', (int)sizeof(quit));
-//             read(sockfd,quit, 100);
-//             printf(CYN "Server : %s\n" RESET, quit);
-//             break;
-//         }
-
-//         // printf("command: %s\n", command);
-
-//         //send PORT n1,n2,n3,n4,n5,n6
-//         memset(str, '\0', (int)sizeof(str));
-//         get_port_str(str, ip, n5, n6);
-
-//         write(sockfd, str, strlen(str));
-//         memset(str, '\0', (int)sizeof(str));
-//         datafd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-
-//         // printf(CYN "Data connection Established...\n" RESET);
-
-//         if(cmd_code == 1)
-//         {
-//             if(_ls(sockfd, datafd, command) < 0){
-//                 close(datafd);
-//                 continue;
-//             }
-//         }
-//         else if(cmd_code == 2){
-//             if(_get(sockfd, datafd, command) < 0){
-//                 close(datafd);
-//                 continue;
-//             }
-//         }
-//         else if(cmd_code == 5){
-//             if(_history(sockfd, datafd, command) < 0){
-//                 close(datafd);
-//                 continue;
-//             }
-//         }
-//         close(datafd);
-//     }
-//     close(sockfd);	
-// 	return TRUE;
-// }
-
-
 int main(int argc, char **argv){
 
-	int server_port, controlfd, listenfd, datafd, code, n5, n6, x=rand()%10000;
+	int server_port, sockfd, listenfd, datafd, code, n5, n6, x;
     uint16_t port;
 	struct sockaddr_in servaddr, data_addr;
 	char command[1024], ip[50], str[MAXLINE+1];
@@ -594,101 +469,106 @@ int main(int argc, char **argv){
 	}
 
 	//get server port
-	sscanf(argv[2], "%d", &server_port);
+	sscanf(argv[2], "%d", &server_port); // store argv[2] into server_port
 
-    //set up control connection--------------------------------------------------
-    if ( (controlfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-    	perror("socket error");
+    //set up control connection using sockfd as control socket descriptor
+    if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    	perror("socket connection error occured\n");
     	exit(-1);
     }
                 
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port   = htons(server_port);
+    memset(&servaddr, '\0', (int)sizeof(servaddr));
+    servaddr.sin_family = AF_INET; // address family -> trivially, we use AF_INET.
+    servaddr.sin_port   = htons(server_port); // 16 bit port no, conv from network to host byte order
+
+    // convert host addr into AF_INET addr family as store in server_addr.sin_addr
     if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0){
-    	perror("inet_pton error");
+        // conversion successful only if inet_pton returns 1
+    	perror("inet_pton error. Could not parse host address.");
     	exit(-1);
     }
         
-    if (connect(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
-    	perror("connect error");
+    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
+    	perror("connection error occured.\n");
     	exit(-1);
     }
 
 
-    //set up data connection------------------------------------------------------
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    // set up data connection
+    listenfd = socket(AF_INET, SOCK_STREAM, 0); // TCP(SOCK_STREAM) will only break connection when one party exits or network error occurs
 
-    bzero(&data_addr, sizeof(data_addr));
+    memset(&data_addr, '\0', sizeof(data_addr));
     data_addr.sin_family      = AF_INET;
     data_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     data_addr.sin_port        = htons(0);
 
+    // bind socket to the data_addr port
     bind(listenfd, (struct sockaddr*) &data_addr, sizeof(data_addr));
 
+    // listen for connections on socket
     listen(listenfd, BACKLOGS);
     
-    //get ip address from control port
-    get_ip_port(controlfd, ip, (int *)&x);
-    //x = 0;
+    // get ip address from control port
+    get_ip_port(sockfd, ip, (int *)&x);
     // printf("x: %d\n", x);
     printf(YEL "ip: %s\n" RESET, ip);
     //get data connection port from listenfd
     get_ip_port(listenfd, str, (int *)&port);
     
     printf(YEL "Port: %d\n" RESET,  port);
-
+    printf(YEL "str: %s\n" RESET, str);
     convert(port, &n5, &n6);
 
     while(1){
 
-        bzero(command, strlen(command));
-        //get command from user
+        memset(command, '\0', strlen(command));
+        
+        // get prompt
         code = get_cmd_code(command);
         
-        //user has entered quit
+        // case: quit
         if(code == 4){
             char quit[1024];
             sprintf(quit, "QUIT");
-            write(controlfd, quit, strlen(quit));
-            bzero(quit, (int)sizeof(quit));
-            read(controlfd,quit, 1024);
-            printf("Server Response: %s\n", quit);
+            write(sockfd, quit, strlen(quit));
+            memset(quit, '\0', (int)sizeof(quit));
+            read(sockfd,quit, 1024);
+            printf(CYN "Server : %s\n" RESET, quit);
             break;
         }
         // printf("command: %s\n", command);
 
         //send PORT n1,n2,n3,n4,n5,n6
-        bzero(str, (int)sizeof(str));
+        memset(str, '\0', (int)sizeof(str));
         get_port_str(str, ip, n5, n6);
 
-        write(controlfd, str, strlen(str));
-        bzero(str, (int)sizeof(str));
+        write(sockfd, str, strlen(str));
+        memset(str, '\0', (int)sizeof(str));
         datafd = accept(listenfd, (struct sockaddr*)NULL, NULL);
 
-        printf("Data connection Established...\n");
+        // printf("Data connection Established...\n");
 
         if(code == 1)
         {
-            if(_ls(controlfd, datafd, command) < 0){
+            if(_ls(sockfd, datafd, command) < 0){
                 close(datafd);
                 continue;
             }
         }
         else if(code == 2){
-            if(_get(controlfd, datafd, command) < 0){
+            if(_get(sockfd, datafd, command) < 0){
                 close(datafd);
                 continue;
             }
         }
         else if(code == 5){
-            if(_history(controlfd, datafd, command) < 0){
+            if(_history(sockfd, datafd, command) < 0){
                 close(datafd);
                 continue;
             }
         }
         close(datafd);
     }
-    close(controlfd);	
+    close(sockfd);	
 	return TRUE;
 }
