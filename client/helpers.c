@@ -421,7 +421,7 @@ int _get(int sockfd, int datafd, char *input){
             printf("Server Control Response: %s\n", recvline);
             temp = strtok(recvline, " ");
             if(atoi(temp) != 200){
-                printf("File Error...\nExiting...\n");
+                printf("File Error.\n");
                 break;
             }
             control_finished = TRUE;

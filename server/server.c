@@ -66,11 +66,11 @@ int main(int argc, char **argv){
     			if((x = read(connfd, recvline, MAXLINE)) < 0){
     				break;
     			}
-    			printf("*****************\n%s \n", recvline);
+    			printf("========================================================================\n%s \n", recvline);
                 if(strcmp(recvline, "QUIT") == 0){
-                    printf("Quitting...\n");
+                    printf("Exiting.\n");
                     char goodbye[1024];
-                    sprintf(goodbye,"221 Goodbye");
+                    sprintf(goodbye,"Exit successful\n");
                     write(connfd, goodbye, strlen(goodbye));
                     close(connfd);
                     break;
@@ -85,7 +85,7 @@ int main(int argc, char **argv){
     				break;
     			}
 
-    			printf("-----------------\n%s \n", command);
+    			printf("______________________________________________________________________\n%s \n", command);
 
     			code = get_cmd_code(command);
     			if(code == 1){
@@ -94,7 +94,7 @@ int main(int argc, char **argv){
     				_get(connfd, datafd, command);
     			}else if(code == 4){
                     char reply[1024];
-                    sprintf(reply, "550 Filename Does Not Exist");
+                    sprintf(reply, RED "err: File not found\n" RESET);
                     write(connfd, reply, strlen(reply));
                     close(datafd);
                     continue;
@@ -104,7 +104,7 @@ int main(int argc, char **argv){
     			
 
 			}
-    		printf("Exiting Child Process...\n");
+    		printf("Disconnect Client.\n");
     		close(connfd);
     		_exit(1);
 		}

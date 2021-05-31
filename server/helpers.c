@@ -71,7 +71,7 @@ int get_client_ip_port(char *str, char *client_ip, int *client_port){
 	x6 = atoi(n6);
 	*client_port = (256*x5)+x6;
 
-	printf("client_ip: %s client_port: %d\n", client_ip, *client_port);
+	printf("Client's IP: %s Port: %d\n", client_ip, *client_port);
 	return 1;
 }
 
@@ -80,7 +80,7 @@ int setup_data_connection(int *fd, char *client_ip, int client_port, int server_
 	struct sockaddr_in cliaddr, tempaddr;
 
 	if ( (*fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-    	perror("socket error");
+    	perror("err: socket error");
     	return -1;
     }
 
@@ -102,12 +102,12 @@ int setup_data_connection(int *fd, char *client_ip, int client_port, int server_
     cliaddr.sin_family = AF_INET;
     cliaddr.sin_port   = htons(client_port);
     if (inet_pton(AF_INET, client_ip, &cliaddr.sin_addr) <= 0){
-    	perror("inet_pton error");
+    	perror("err: inet_pton error");
     	return -1;
     }
 
     if (connect(*fd, (struct sockaddr *) &cliaddr, sizeof(cliaddr)) < 0){
-    	perror("connect error");
+    	perror("err: connect error");
     	return -1;
     }
 
@@ -147,21 +147,13 @@ int _ls(int controlfd, int datafd, char *input){
 	memset(filelist, '\0', (int)sizeof(filelist));
 
 	if(get_filename(input, filelist) > 0){
-		printf("Filelist Detected\n");
+
 		sprintf(str, "ls %s", filelist);
 		printf("Filelist: %s\n", filelist);
 		rm_lt_spaces(filelist);
-		//verify that given input is valid
-		/*struct stat statbuf;
-		stat(filelist, &statbuf);
-		if(!(S_ISDIR(statbuf.st_mode))) {
-			sprintf(sendline, "550 No Such File or Directory\n");
-    		write(controlfd, sendline, strlen(sendline));
-    		return -1;
-		}*/
     	DIR *dir = opendir(filelist);
     	if(!dir){
-    		sprintf(sendline, "550 No Such File or Directory\n");
+    		sprintf(sendline, "No such file or directory\n");
     		write(controlfd, sendline, strlen(sendline));
     		return -1;
     	}else{closedir(dir);}
@@ -170,12 +162,12 @@ int _ls(int controlfd, int datafd, char *input){
 		sprintf(str, "ls");
 	}
 
-	 //initiate file pointer for popen()
+	//  initiate file pointer for popen()
     FILE *in;
     extern FILE *popen();
 
     if (!(in = popen(str, "r"))) {
-    	sprintf(sendline, "451 Requested action aborted. Local error in processing\n");
+    	sprintf(sendline, "Abort action. Local error in processing\n");
     	write(controlfd, sendline, strlen(sendline));
         return -1;
     }
@@ -186,7 +178,7 @@ int _ls(int controlfd, int datafd, char *input){
         memset(sendline, '\0', (int)sizeof(sendline));
     }
 
-    sprintf(sendline, "200 Command OK");
+    sprintf(sendline, "status: successful");
     write(controlfd, sendline, strlen(sendline));
     pclose(in);
 
@@ -210,7 +202,7 @@ int _get(int controlfd, int datafd, char *input){
 		}
 	}else{
 		printf("Filename Not Detected\n");
-		sprintf(sendline, "450 Requested file action not taken.\nFilename Not Detected\n");
+		sprintf(sendline, "Abort action. Local error in processing\n");
     	write(controlfd, sendline, strlen(sendline));
 		return -1;
 	}
@@ -219,18 +211,17 @@ int _get(int controlfd, int datafd, char *input){
     extern FILE *popen();
 
     if (!(in = popen(str, "r"))) {
-    	sprintf(sendline, "451 Requested action aborted. Local error in processing\n");
+    	sprintf(sendline, "Abort action. Local error in processing\n");
     	write(controlfd, sendline, strlen(sendline));
         return -1;
     }
 
     while (fgets(sendline, MAXLINE, in) != NULL) {
         write(datafd, sendline, strlen(sendline));
-        //printf("%s", sendline);
         memset(sendline, '\0', (int)sizeof(sendline));
     }
 
-    sprintf(sendline, "200 Command OK");
+    sprintf(sendline, "status: successful");
     write(controlfd, sendline, strlen(sendline));
     pclose(in);
     return 1;
